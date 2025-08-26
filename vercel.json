@@ -57,6 +57,10 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "identity-credentials-get=(), camera=(), microphone=(), geolocation=(), interest-cohort=()"
         }
       ]
     }
