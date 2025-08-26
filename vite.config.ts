@@ -57,4 +57,14 @@ export default defineConfig({
     // Define API base URL for production
     __API_BASE_URL__: JSON.stringify(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000'),
   },
+  preview: {
+    port: 3000,
+    headers: {
+      // Production headers for preview builds
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+      'Permissions-Policy': 'identity-credentials-get=(), camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    },
+  },
 })
