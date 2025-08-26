@@ -10,7 +10,7 @@ import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 import LoadingSpinner from './LoadingSpinner';
 
-// Lazy load Stripe-dependent components to prevent loading during login
+// Lazy load components
 const BrandWallet = lazy(() => import('./BrandWallet'));
 const PaymentManagement = lazy(() => import('./PaymentManagement'));
 

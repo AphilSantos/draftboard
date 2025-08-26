@@ -1,8 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
 
 interface WalletTransaction {
   id: string;
@@ -27,8 +23,6 @@ interface TopUpFormProps {
 }
 
 const TopUpForm: React.FC<TopUpFormProps> = ({ onTopUpComplete }) => {
-  const stripe = useStripe();
-  const elements = useElements();
   const [amount, setAmount] = useState(50);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,11 +33,7 @@ const TopUpForm: React.FC<TopUpFormProps> = ({ onTopUpComplete }) => {
     setError('');
 
     try {
-      if (!stripe || !elements) {
-        throw new Error('Stripe not loaded');
-      }
-
-      // Create payment intent for wallet top-up
+      // Direct wallet top-up (no Stripe needed)
       const response = await fetch('/api/brands/wallet/top-up', {
         method: 'POST',
         headers: {
@@ -57,32 +47,10 @@ const TopUpForm: React.FC<TopUpFormProps> = ({ onTopUpComplete }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create top-up payment');
+        throw new Error(errorData.error || 'Failed to add funds to wallet');
       }
 
       const result = await response.json();
-
-      // Check if this is a direct top-up (no Stripe needed)
-      if (result.message && result.message.includes('successfully')) {
-        alert(`Successfully added $${amount} to your wallet!`);
-        onTopUpComplete();
-        return;
-      }
-
-      // Handle Stripe payment
-      const { clientSecret } = result;
-
-      // Confirm payment
-      const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement)!,
-        }
-      });
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
-      }
-
       alert(`Successfully added $${amount} to your wallet!`);
       onTopUpComplete();
     } catch (err: unknown) {
@@ -112,27 +80,13 @@ const TopUpForm: React.FC<TopUpFormProps> = ({ onTopUpComplete }) => {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Card Details
-          </label>
-          <div className="border border-gray-300 rounded-md p-3">
-            <CardElement
-              options={{
-                style: {
-                  base: {
-                    fontSize: '16px',
-                    color: '#424770',
-                    '::placeholder': {
-                      color: '#aab7c4',
-                    },
-                  },
-                  invalid: {
-                    color: '#9e2146',
-                  },
-                },
-              }}
-            />
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="flex items-center">
+            <span className="text-blue-600 mr-2">💰</span>
+            <div>
+              <p className="text-sm font-medium text-blue-900">Direct Wallet Top-Up</p>
+              <p className="text-xs text-blue-700">Funds will be added directly to your wallet balance</p>
+            </div>
           </div>
         </div>
 
@@ -144,7 +98,7 @@ const TopUpForm: React.FC<TopUpFormProps> = ({ onTopUpComplete }) => {
 
         <button
           type="submit"
-          disabled={loading || !stripe}
+          disabled={loading}
           className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Processing...' : `Add $${amount} to Wallet`}
@@ -211,9 +165,7 @@ const BrandWallet: React.FC = () => {
           >
             ← Back to wallet
           </button>
-          <Elements stripe={stripePromise}>
-            <TopUpForm onTopUpComplete={handleTopUpComplete} />
-          </Elements>
+          <TopUpForm onTopUpComplete={handleTopUpComplete} />
         </div>
       </div>
     );

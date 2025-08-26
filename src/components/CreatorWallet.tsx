@@ -266,7 +266,7 @@ const CreatorWallet: React.FC = () => {
                 >
                   <option value="bank_transfer">Bank Transfer</option>
                   <option value="paypal">PayPal</option>
-                  <option value="stripe">Stripe</option>
+
                 </select>
               </div>
             </div>
