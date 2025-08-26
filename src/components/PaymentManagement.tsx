@@ -1,9 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, useStripe } from '@stripe/react-stripe-js';
-
-// Load Stripe (you'll need to add your publishable key to .env)
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
 
 interface Winner {
   id: string;
@@ -40,8 +35,7 @@ interface PaymentFormProps {
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) => {
-  const stripe = useStripe();
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'credits' | 'prizes'>('stripe');
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'credits' | 'prizes'>('wallet');
   const [amount, setAmount] = useState(winner.reward.cashAmount);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,7 +46,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
     setError('');
 
     try {
-      if (paymentMethod === 'stripe') {
+      if (paymentMethod === 'wallet') {
         // Use wallet balance for payment
         const response = await fetch('/api/payments/process-wallet-payment', {
           method: 'POST',
@@ -130,9 +124,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
             <label className="flex items-center">
               <input
                 type="radio"
-                value="stripe"
-                checked={paymentMethod === 'stripe'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'credits' | 'prizes')}
+                value="wallet"
+                checked={paymentMethod === 'wallet'}
+                onChange={(e) => setPaymentMethod(e.target.value as 'wallet' | 'credits' | 'prizes')}
                 className="mr-2"
               />
               <span className="text-sm">💰 Wallet Balance (Real Money)</span>
@@ -142,7 +136,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
                 type="radio"
                 value="credits"
                 checked={paymentMethod === 'credits'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'credits' | 'prizes')}
+                onChange={(e) => setPaymentMethod(e.target.value as 'wallet' | 'credits' | 'prizes')}
                 className="mr-2"
               />
               <span className="text-sm">🎫 Platform Credits</span>
@@ -152,7 +146,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
                 type="radio"
                 value="prizes"
                 checked={paymentMethod === 'prizes'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'credits' | 'prizes')}
+                onChange={(e) => setPaymentMethod(e.target.value as 'wallet' | 'credits' | 'prizes')}
                 className="mr-2"
               />
               <span className="text-sm">🎁 Prizes</span>
@@ -161,7 +155,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
         </div>
 
         {/* Amount Input */}
-        {(paymentMethod === 'stripe' || paymentMethod === 'credits') && (
+        {(paymentMethod === 'wallet' || paymentMethod === 'credits') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Amount ($)
@@ -179,7 +173,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
         )}
 
         {/* Wallet Balance Info */}
-        {paymentMethod === 'stripe' && (
+        {paymentMethod === 'wallet' && (
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
             <div className="flex items-center">
               <span className="text-blue-600 mr-2">💰</span>
@@ -211,10 +205,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ winner, onPaymentComplete }) 
 
         <button
           type="submit"
-          disabled={loading || !stripe}
+          disabled={loading}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Processing...' : `Pay ${paymentMethod === 'stripe' || paymentMethod === 'credits' ? `$${amount}` : 'Prize'}`}
+          {loading ? 'Processing...' : `Pay ${paymentMethod === 'wallet' || paymentMethod === 'credits' ? `$${amount}` : 'Prize'}`}
         </button>
       </form>
     </div>
@@ -286,12 +280,10 @@ const PaymentManagement: React.FC = () => {
             >
               ← Back to winners
             </button>
-            <Elements stripe={stripePromise}>
-              <PaymentForm
-                winner={selectedWinner}
-                onPaymentComplete={handlePaymentComplete}
-              />
-            </Elements>
+            <PaymentForm
+              winner={selectedWinner}
+              onPaymentComplete={handlePaymentComplete}
+            />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -324,7 +316,9 @@ const PaymentManagement: React.FC = () => {
                     )}
                     {winner.reward.creditAmount > 0 && (
                       <p className="text-sm">
-                        <span className="font-medium">Credits:</span> {winner.reward.creditAmount}
+                        <span className="text-sm">
+                          <span className="font-medium">Credits:</span> {winner.reward.creditAmount}
+                        </span>
                       </p>
                     )}
                     {winner.reward.prizeDescription && (
