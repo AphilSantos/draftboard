@@ -112,7 +112,7 @@ const GoogleSignInLogin: React.FC<GoogleSignInLoginProps> = ({
             text="signin_with"
             shape="rectangular"
             logo_alignment="left"
-            width={400}
+            width="100%"
           />
         </div>
       </div>
