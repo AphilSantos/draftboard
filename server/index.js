@@ -4362,6 +4362,34 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Database health check endpoint
+app.get('/api/health/db', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    
+    res.json({ 
+      status: 'healthy',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      hasJwtSecret: !!process.env.JWT_SECRET
+    });
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    res.status(500).json({ 
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      hasJwtSecret: !!process.env.JWT_SECRET
+    });
+  }
+});
+
 // ==================== END TEST ENDPOINTS ====================
 
 // ==================== END PAYMENT ROUTES ====================
